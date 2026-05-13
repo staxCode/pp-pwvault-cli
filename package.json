@@ -1,0 +1,22 @@
+{
+  "name": "pwvault-cli",
+  "version": "1.0.0",
+  "description": "Offline CLI password manager",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "argon2": "^0.41.1",
+    "commander": "^12.1.0",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/prompts": "^2.4.9",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}
