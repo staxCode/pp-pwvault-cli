@@ -24,7 +24,7 @@ npm start <comando>
 
 ### Alta prioridad
 
-- [ ] **Soporte multiplataforma para portapapeles** — Actualmente solo funciona en Windows con `clip`. Usar una librería como `clipboardy` para macOS y Linux.
+- [X] **Soporte multiplataforma para portapapeles** — Reemplazado `clip` de Windows por `clipboardy`, funciona en Windows, macOS y Linux.
 - [X] **Tests automatizados** — Agregar pruebas unitarias con Jest o Vitest para los módulos de cifrado, descifrado y operaciones del vault.
 - [X] **Ocultar vault en Linux/macOS** — Detección de SO: en Windows usa `attrib +h`, en Unix no hace falta (el directorio `.pwvault` ya tiene prefijo de punto).
 
