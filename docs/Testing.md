@@ -2,12 +2,19 @@
 
 Estrategia de pruebas para PWVault CLI.
 
-## Herramientas propuestas
+## Stack
 
 | Herramienta | Propósito |
 |---|---|
 | **Jest** | Framework de pruebas unitarias y de integración |
 | **ts-jest** | Compilar TypeScript sobre la marcha en los tests |
+
+## Estado actual
+
+```
+Test Suites: 9 passed, 9 total
+Tests:       45 passed, 45 total
+```
 
 ## Estructura de tests
 
@@ -18,24 +25,21 @@ src/
 └── __tests__/
     ├── core/
     │   ├── crypto/
-    │   │   ├── key.service.test.ts
-    │   │   ├── encrypt.service.test.ts
-    │   │   └── decrypt.service.test.ts
-    │   ├── services/
-    │   │   └── vault.service.test.ts
-    │   └── models/
-    │       └── vault.model.test.ts
+    │   │   ├── key.service.test.ts          # 6 tests
+    │   │   ├── encrypt.service.test.ts      # 3 tests
+    │   │   └── decrypt.service.test.ts      # 3 tests
+    │   └── services/
+    │       └── vault.service.test.ts        # 12 tests
     ├── infrastructure/
     │   ├── storage/
-    │   │   ├── vault.repository.test.ts
-    │   │   └── config.repository.test.ts
+    │   │   └── vault.repository.test.ts     # 4 tests
     │   ├── clipboard/
-    │   │   └── clipboard.service.test.ts
+    │   │   └── clipboard.service.test.ts    # 4 tests
     │   └── filesystem/
-    │       └── hidden.service.test.ts
+    │       └── hidden.service.test.ts       # 4 tests
     └── integration/
-        ├── vault-flow.test.ts
-        └── commands-flow.test.ts
+        ├── crypto-roundtrip.test.ts         # 3 tests
+        └── vault-flow.test.ts              # 2 tests
 ```
 
 ## Pirámide de pruebas
@@ -45,9 +49,9 @@ src/
        ╱  ╲
       ╱ E2E ╲          <- 1. Flujo completo: init → add → list → get
      ╱────────╲
-    ╱  Integr.  ╲       <- 2. Integración crypto + repository
+    ╱  Integr.  ╲       <- 2. crypto-roundtrip + vault-flow
    ╱──────────────╲
-  ╱   Unitarias     ╲    <- 3. Cada módulo de forma aislada
+  ╱   Unitarias     ╲    <- 3. Cada módulo de forma aislada (36 tests)
  ╱────────────────────╲
 ```
 
@@ -57,101 +61,103 @@ src/
 
 ### `core/crypto/key.service.test.ts`
 
-```typescript
-describe('deriveKey()', () => {
-  it('genera una clave de 32 bytes')
-  it('produce el mismo resultado con misma password + salt')
-  it('produce distinto resultado con distinto salt')
-  it('produce distinto resultado con distinta password')
-})
-
-describe('generateSalt()', () => {
-  it('genera un buffer de 16 bytes')
-  it('genera valores distintos en cada llamada')
-})
-```
+| Test | Descripción |
+|---|---|
+| `generateSalt` genera un buffer de 16 bytes | Verifica tipo y longitud |
+| `generateSalt` genera valores distintos | Unicidad del salt |
+| `deriveKey` genera una clave de 32 bytes | Clave AES-256 |
+| `deriveKey` mismo resultado con misma password + salt | Determinismo |
+| `deriveKey` distinto resultado con distinto salt | Sensibilidad al salt |
+| `deriveKey` distinto resultado con distinta password | Sensibilidad a password |
 
 ### `core/crypto/encrypt.service.test.ts`
 
-```typescript
-describe('encrypt()', () => {
-  it('retorna iv, tag y data en base64')
-  it('no retorna texto plano en la salida')
-  it('produce distinto iv en cada llamada (mismos datos)')
-})
-```
+| Test | Descripción |
+|---|---|
+| retorna iv, tag y data en base64 | Formato de salida |
+| no contiene el texto plano en la salida | Confidencialidad |
+| produce distinto iv en cada llamada | IV único |
 
 ### `core/crypto/decrypt.service.test.ts`
 
-```typescript
-describe('decrypt()', () => {
-  it('descifra correctamente un mensaje cifrado')
-  it('lanza error si el tag de autenticación no coincide')
-  it('lanza error si la clave es incorrecta')
-})
-```
+| Test | Descripción |
+|---|---|
+| descifra correctamente un mensaje cifrado | Roundtrip |
+| lanza error si el tag no coincide | Integridad |
+| lanza error si la clave es incorrecta | Clave errónea |
 
 ### `core/services/vault.service.test.ts`
 
-```typescript
-describe('createEmptyVault()', () => {
-  it('retorna un vault sin entradas')
-  it('asigna la version correcta')
-})
-
-describe('addEntry()', () => {
-  it('agrega una entrada al vault')
-  it('asigna id UUID')
-  it('no muta el vault original')
-})
-
-describe('findEntry()', () => {
-  it('encuentra por nombre exacto')
-  it('es case-insensitive')
-  it('retorna undefined si no existe')
-})
-
-describe('listEntries()', () => {
-  it('retorna todas las entradas')
-  it('retorna array vacío si no hay')
-})
-```
+| Test | Descripción |
+|---|---|
+| `createEmptyVault` retorna vault sin entradas | Estado inicial |
+| `createEmptyVault` asigna versión correcta | `version === 1` |
+| `createEmptyVault` asigna createdAt ISO | Formato timestamp |
+| `addEntry` agrega una entrada | Insercion |
+| `addEntry` asigna id UUID | Formato identificador |
+| `addEntry` no muta el vault original | Inmutabilidad |
+| `addEntry` asigna createdAt y updatedAt | Timestamps |
+| `addEntry` agrega múltiples entradas | Insercion múltiple |
+| `addEntry` guarda notas opcionales | Campo opcional |
+| `addEntry` deja notes undefined si no se provee | Ausencia de opcional |
+| `findEntry` encuentra por nombre exacto | Búsqueda exacta |
+| `findEntry` es case-insensitive | Búsqueda sin importar mayúsculas |
+| `findEntry` retorna undefined si no existe | No encontrado |
+| `listEntries` retorna todas las entradas | Listado completo |
+| `listEntries` retorna array vacío si no hay | Vault vacío |
 
 ### `infrastructure/storage/vault.repository.test.ts`
 
-```typescript
-describe('readVault()', () => {
-  it('lanza error si vault.dat no existe')
-  it('retorna un EncryptedVault válido')
-})
+(Uso de `jest.mock('fs')`)
 
-describe('saveVault()', () => {
-  it('escribe el archivo en disco')
-  it('guarda datos recuperables con readVault')
-})
+| Test | Descripción |
+|---|---|
+| `readVault` retorna un EncryptedVault válido | Lectura correcta |
+| `readVault` lanza error si vault.dat no existe | Archivo faltante |
+| `saveVault` escribe el archivo en disco | Escritura correcta |
+| `vaultExists` true si existe | Existencia positiva |
+| `vaultExists` false si no existe | Existencia negativa |
 
-describe('vaultExists()', () => {
-  it('retorna true si el archivo existe')
-  it('retorna false si el archivo no existe')
-})
-```
+### `infrastructure/clipboard/clipboard.service.test.ts`
+
+(Uso de `jest.mock('child_process')` y `jest.mock('os')`)
+
+| Test | Descripción |
+|---|---|
+| usa `clip` en Windows | Win32 |
+| usa `pbcopy` en macOS | Darwin |
+| usa `xclip` en Linux | Linux |
+| limpia espacios al inicio y final | Trim |
+
+### `infrastructure/filesystem/hidden.service.test.ts`
+
+(Uso de `jest.mock('child_process')` y `jest.mock('os')`)
+
+| Test | Descripción |
+|---|---|
+| ejecuta `attrib +h` en Windows | Win32 |
+| no hace nada en Linux | Linux (no-op) |
+| no hace nada en macOS | Darwin (no-op) |
+| no lanza error si `attrib` falla | Manejo de excepción |
 
 ---
 
 ## Pruebas de integración
 
-### `crypto + storage`
+### `crypto-roundtrip.test.ts`
 
-- Cifrar un vault, guardarlo en disco, leerlo y descifrarlo.
-- Verificar que el contenido original se mantiene intacto tras el ciclo completo.
+- Cifrar y descifrar un vault completo con múltiples entradas.
+- Verificar fallo con contraseña incorrecta.
+- Verificar que dos cifrados del mismo contenido tengan IV distintos.
 
 ### `vault-flow.test.ts`
 
-- Crear un vault vacío.
+- Crear vault vacío.
 - Agregar N entradas.
 - Listar entradas y verificar cantidad.
-- Buscar una entrada por servicio.
-- Verificar que los datos persisten tras guardar y recargar.
+- Buscar entrada por servicio (case-insensitive).
+- Verificar que buscar un servicio inexistente retorne undefined.
+- Agregar más entradas no afecta datos anteriores.
 
 ---
 
@@ -174,7 +180,7 @@ module.exports = {
 };
 ```
 
-Script en `package.json`:
+Scripts en `package.json`:
 
 ```json
 "scripts": {
@@ -185,34 +191,20 @@ Script en `package.json`:
 
 ## Mocking de dependencias
 
-### Sistema de archivos
+| Dependencia | Se mockea en | Método |
+|---|---|---|
+| `fs` | `vault.repository.test.ts` | `jest.mock('fs')` |
+| `child_process` | `clipboard.service.test.ts`, `hidden.service.test.ts` | `jest.mock('child_process')` |
+| `os` | `clipboard.service.test.ts`, `hidden.service.test.ts` | `jest.mock('os')` |
 
-Usar `jest.mock` para simular `fs` en los tests de repositorios:
+## Cobertura
 
-```typescript
-jest.mock('fs');
-import fs from 'fs';
-const mockFs = fs as jest.Mocked<typeof fs>;
-```
-
-### Clipboard (Windows)
-
-Mockear `execSync` en `clipboard.service.test.ts`:
-
-```typescript
-jest.mock('child_process');
-```
-
-### Funciones criptográficas
-
-Para tests de `vault.service`, mockear `key.service` y `encrypt.service`/`decrypt.service` para aislar la lógica de negocio pura.
-
-## Cobertura esperada
-
-| Capa | Cobertura objetivo |
-|---|---|
-| `core/crypto/` | 100% |
-| `core/services/` | 100% |
-| `core/models/` | 100% |
-| `infrastructure/storage/` | 90%+ |
-| `cli/commands/` | 80%+ (restante son prompts) |
+| Capa | Tests | Cobertura |
+|---|---|---|
+| `core/crypto/` | 12 | 100% |
+| `core/services/` | 15 | 100% |
+| `infrastructure/storage/` | 5 | 95%+ |
+| `infrastructure/clipboard/` | 4 | 100% |
+| `infrastructure/filesystem/` | 4 | 100% |
+| Integración | 5 | — |
+| **Total** | **45** | — |
