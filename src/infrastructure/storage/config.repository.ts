@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { CONFIG_PATH, VAULT_PATH } from './paths';
+import { CONFIG_PATH, VAULT_PATH } from '../../shared/constants';
 
 export function createDefaultConfig() {
   const config = {

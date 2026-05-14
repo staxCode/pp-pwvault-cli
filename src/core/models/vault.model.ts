@@ -13,3 +13,17 @@ export type Vault = {
   createdAt: string;
   entries: VaultEntry[];
 };
+
+export type EncryptedVault = {
+  salt: string;
+  iv: string;
+  tag: string;
+  data: string;
+};
+
+export type NewEntryData = {
+  service: string;
+  username: string;
+  password: string;
+  notes?: string;
+};

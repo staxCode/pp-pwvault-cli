@@ -1,9 +1,9 @@
 import { Command } from 'commander';
 
-import { initCommand } from './commands/init';
-import { addCommand } from './commands/add';
-import { listCommand } from './commands/list';
-import { getCommand } from './commands/get';
+import { initCommand } from './cli/commands/init.command';
+import { addCommand } from './cli/commands/add.command';
+import { listCommand } from './cli/commands/list.command';
+import { getCommand } from './cli/commands/get.command';
 
 const program = new Command();
 
